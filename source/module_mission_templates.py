@@ -2122,6 +2122,7 @@ tournament_triggers = [
     # (store_trigger_param_1, ":agent_no"),
     # ]),
 #even though $disable_npc_complaints should really only apply for companions
+# DA: commenting out relation changes in tournament, should become a separate Diplomacy option
  # (ti_on_agent_killed_or_wounded, 0, 0, [
  #        # (ge, "$g_dplmc_ai_changes", DPLMC_AI_CHANGES_LOW),
  #      (eq, "$g_mt_mode", abm_tournament),
