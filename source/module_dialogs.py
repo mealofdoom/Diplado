@@ -2680,7 +2680,7 @@ Still I am sorry that I'll leave you soon. You must promise me, you'll come visi
  (store_faction_of_party, ":contact_town_faction", ":town_with_contacts"),
  (is_between, "$players_kingdom", kingdoms_begin, kingdoms_end),
  (eq, ":contact_town_faction", "$players_kingdom"), #own faction
- (str_store_party_name, s17, ":town_with_contacts"),
+ (str_store_party_name, s17, ":town_with_contacts"), #DA 3.10.2019 - fix to show town correctly
  (party_get_slot, ":town_ruler", ":town_with_contacts", slot_town_lord),
  (try_begin),
    (is_between, ":town_ruler", heroes_begin, heroes_end),
@@ -2695,7 +2695,7 @@ Still I am sorry that I'll leave you soon. You must promise me, you'll come visi
  (val_min, ":instability", 60), #no descriptor past that point
  (val_div, ":instability", 20), #3 to 0
  (store_sub, ":string", "str_the_s12_is_a_rock_of_stability_politically_speaking_whatever_the_lords_may_think_of_each_other_they_fight_as_one_against_the_common_foe", ":instability"),
- (str_store_faction_name, s12, ":contact_town_faction"),
+ (str_store_string, s12, "@realm"), #instead of directly storing faction name #The {our realm} -> The {realm}
  (str_store_string, s19, ":string"),
  (call_script, "script_dplmc_print_subordinate_says_sir_madame_to_s0"),
  ], "Aye, {s0}, I do have some friends back in {s17}... However, I do not believe {reg18?{s18} would take kindly to this sort of skullduggery:the political landscape is changing so drastically}. It is common knowledge that {s19}", "do_member_trade",[
@@ -8631,9 +8631,9 @@ What kind of recruits do you want?", "dplmc_constable_recruit_select",
 "I have some prisoners -- can you sell them for me?", "dplmc_constable_prisoner",[]],
 
 ##SB : convenience feature of selling prisoners in garrison
-[anyone|plyr,"dplmc_constable_talk",
-#[(store_num_regular_prisoners,":prisoners", "$current_town"),(ge,":prisoners",1)], #DA: for some reason it always returns the number of prisoners in the player's party
-[(party_get_num_prisoners, ":town_prisoners", "$current_town"),(ge,":town_prisoners",1)],
+
+[anyone|plyr,"dplmc_constable_talk", 
+[(party_get_num_prisoners,":prisoners", "$current_town"),(ge,":prisoners",1)],
 "We have prisoners in the dungeon -- let's have a look over them.", "dplmc_constable_garrison_prisoner_manage",[
 #move prisoner
 (party_clear, "p_temp_party_2"),
@@ -14028,9 +14028,9 @@ What kind of recruits do you want?", "dplmc_constable_recruit_select",
 (try_end),
 
 (try_for_range, ":minister_quest", all_quests_begin, all_quests_end),
-(quest_slot_eq, ":minister_quest", slot_quest_giver_troop, "$g_talk_troop"),
-(check_quest_active, ":minister_quest"),
-(call_script, "script_abort_quest", ":minister_quest", 0),
+  (quest_slot_eq, ":minister_quest", slot_quest_giver_troop, "$g_talk_troop"),
+  (check_quest_active, ":minister_quest"), #DA: make sure that the quest has actually been accepted by the player !
+  (call_script, "script_abort_quest", ":minister_quest", 0),
 (try_end),
 ]],
 
@@ -36918,7 +36918,7 @@ I suppose there are plenty of bounty hunters around to get the job done . . .", 
     (str_store_item_name, s4, ":quest_target_item"),
     (str_store_troop_name, s1, ":quest_giver_troop"),
     #SB : recalculate new debt
-    (store_item_value,":qst_deliver_wine_debt",":quest_target_item"),
+    (store_item_value,":qst_deliver_wine_debt", ":quest_target_item"),
     (item_get_max_ammo, ":max_amount", ":quest_target_item"),
     (val_mul,":qst_deliver_wine_debt",":quest_target_amount"),
     (val_mul,":qst_deliver_wine_debt", 6),
@@ -41159,27 +41159,28 @@ I suppose there are plenty of bounty hunters around to get the job done . . .", 
   (quest_get_slot, ":quest_target_item", "qst_deliver_wine", slot_quest_target_item),
   (this_or_next|eq, ":quest_target_item", "itm_wine"),
   (this_or_next|eq, ":quest_target_item", "itm_ale"),
-  (is_between, ":quest_target_item", food_begin, food_end),
+  (is_between, ":quest_target_item", food_begin, food_end)
   ],
    "I have a cargo of {s6} that needs to be delivered to the tavern in {s4}.\
- If you can take {reg5} units of {s6} to {s4} in 7 days before any goes bad, you may earn {reg8} denars.\
+ If you can take {reg6} units of {s6} to {s4} in 7 days before any goes bad, you may earn {reg8} denars.\
  What do you say?", "merchant_quest_brief_deliver_wine",
-   [(quest_get_slot, reg5, "qst_deliver_wine", slot_quest_target_amount),
+   [
+    (quest_get_slot, reg5, "qst_deliver_wine", slot_quest_target_amount),
     (quest_get_slot, reg8, "qst_deliver_wine", slot_quest_gold_reward),
     (quest_get_slot, ":quest_target_item", "qst_deliver_wine", slot_quest_target_item),
     (quest_get_slot, ":quest_target_center", "qst_deliver_wine", slot_quest_target_center),
+    (item_get_max_ammo, ":max_amount", ":quest_target_item"),
+    (store_div, reg6, reg5, ":max_amount"),
     (str_store_troop_name, s9, "$g_talk_troop"),
     (str_store_party_name_link, s3, "$g_encountered_party"),
     (str_store_party_name_link, s4, ":quest_target_center"),
     (str_store_item_name, s6, ":quest_target_item"),
     (setup_quest_text,"qst_deliver_wine"),
     #SB : temp item count
-    (item_get_max_ammo, ":max_amount", ":quest_target_item"),
     (store_div, "$temp", reg5, ":max_amount"),
-    (str_store_string, s2, "@{s9} of {s3} asked you to deliver {reg5} units of {s6} to the tavern in {s4} in 7 days."),
+    (str_store_string, s2, "@{s9} of {s3} asked you to deliver {reg5} / {reg6} units of {s6} to the tavern in {s4} in 7 days."),
     #s2 should not be changed until the decision is made
    ]],
-
   [anyone,"merchant_quest_brief", [(eq,"$random_merchant_quest_no","qst_deliver_wine")],
    "I have a shipment of {s6} that needs to be delivered to the goods merchant in {s4}.\
  If you can take {reg5} units of {s6} to {s4} in 7 days, you may earn {reg8} denars.\

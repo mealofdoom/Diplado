@@ -35399,7 +35399,7 @@ scripts = [
           (agent_get_class, ":agent_class", ":cur_agent"),
           (this_or_next|eq, ":agent_class", grc_infantry),
           (eq, ":agent_class", grc_cavalry),
-          (agent_get_slot, ":x_pos", ":cur_agent", 1),
+          (agent_get_slot, ":x_pos", ":cur_agent", slot_agent_target_x_pos),
           (eq, ":x_pos", 0),
           (assign, ":y_pos", 0),
           (try_begin),
@@ -35434,8 +35434,8 @@ scripts = [
             (val_add, ":slot_6_positioned", 1),
           (try_end),
           (val_add, "$belfry_num_slots_positioned", 1),
-          (agent_set_slot, ":cur_agent", 1, ":x_pos"),
-          (agent_set_slot, ":cur_agent", 2, ":y_pos"),
+          (agent_set_slot, ":cur_agent", slot_agent_target_x_pos, ":x_pos"),
+          (agent_set_slot, ":cur_agent", slot_agent_target_y_pos, ":y_pos"),
         (try_end),
       (try_end),
       (try_begin),
@@ -35448,7 +35448,7 @@ scripts = [
           (this_or_next|eq, "$attacker_team", ":cur_agent_team"),
           (             eq, "$attacker_team_2", ":cur_agent_team"),
           (neq, ":player_agent", ":cur_agent"),
-          (agent_get_slot, ":x_pos", ":cur_agent", 1),
+          (agent_get_slot, ":x_pos", ":cur_agent", slot_agent_target_x_pos),
           (eq, ":x_pos", 0),
           (assign, ":y_pos", 0),
           (try_begin),
@@ -35483,8 +35483,8 @@ scripts = [
             (val_add, ":slot_6_positioned", 1),
           (try_end),
           (val_add, "$belfry_num_slots_positioned", 1),
-          (agent_set_slot, ":cur_agent", 1, ":x_pos"),
-          (agent_set_slot, ":cur_agent", 2, ":y_pos"),
+          (agent_set_slot, ":cur_agent", slot_agent_target_x_pos, ":x_pos"),
+          (agent_set_slot, ":cur_agent", slot_agent_target_y_pos, ":y_pos"),
         (try_end),
       (try_end),
     (else_try),
@@ -37981,7 +37981,7 @@ scripts = [
           (party_get_num_prisoners, ":prisoner_count", ":town_no"),
           (gt, ":prisoner_count", 0),
           (party_set_slot, ":town_no", slot_center_ransom_broker, ":troop_no"),
-          (troop_set_slot, ":troop_no", slot_troop_cur_center, ":town_no"), #DA: necessary for travellers to know about it
+          (troop_set_slot, ":troop_no", slot_troop_cur_center, ":town_no"), #DA 3.10.2019: necessary for travellers to know about him
           (assign, ":limit", 0), #loop breaker
        (try_end),
        (eq, ":limit", 20), #none found
@@ -38805,6 +38805,109 @@ scripts = [
         (call_script, "script_update_faction_notes", ":faction_no"),
       (try_end),
     ]),
+
+
+  # script_whos_in_the_hall
+  # Who's in the hall? +Dj_FRedy
+  # INPUT: center
+  # OUTPUT:
+  # reg0 = num_total_in_hall
+
+  # string s16
+  # It shows only the Nobles, omitting the rest and including the pretenders
+  # who are currently in the hall of the castle. It also shows the heroes/companions who visit the tavern.
+  ("whos_in_the_hall",
+    [
+      (store_script_param_1, ":center_no"),
+      (store_faction_of_party, ":center_faction", ":center_no"),
+
+      (try_for_range, ":troop_no", heroes_begin, heroes_end),
+        (troop_set_slot, ":troop_no", slot_troop_temp_slot, 0),
+      (try_end),
+      (assign, ":num_ladies", 0),
+      (assign, ":num_lords", 0),
+      (assign, ":num_pretenders", 0),
+      (try_for_range, ":troop_no", heroes_begin, heroes_end),
+        (troop_slot_eq, ":troop_no", slot_troop_temp_slot, 0),
+        (troop_get_slot, ":center_id", ":troop_no", slot_troop_cur_center),
+        (try_begin),
+          (eq, ":center_id", ":center_no"),
+          (is_between, ":center_id", centers_begin, centers_end),
+          
+          (try_begin), #ladies
+            (is_between, ":troop_no", kingdom_ladies_begin, kingdom_ladies_end),
+            (troop_slot_eq, ":troop_no", slot_troop_cur_center, ":center_no"),
+            (store_faction_of_troop, ":lady_faction", ":troop_no"),
+            (is_between, ":lady_faction", kingdoms_begin, kingdoms_end),
+            (assign, ":lady_meets_visitors", 0),
+            (try_begin), #is present at the center and in place of honor
+              (this_or_next|troop_slot_eq, "trp_player", slot_troop_spouse, ":troop_no"),
+              (this_or_next|troop_slot_eq, "trp_player", slot_troop_betrothed, ":troop_no"),
+              (this_or_next|troop_slot_eq, ":troop_no", slot_troop_spouse, "trp_player"),
+              (troop_slot_eq, ":troop_no", slot_troop_betrothed, "trp_player"),
+              (assign, ":lady_meets_visitors", 0),
+            (else_try), #is present at the center as a refugee
+              (store_troop_faction, ":lady_faction", ":troop_no"), #lady is troop
+              (neq, ":lady_faction", ":center_faction"),
+              (assign, ":lady_meets_visitors", 1),
+            (else_try),
+              (troop_slot_ge, ":troop_no", slot_troop_spouse, 1),
+              (try_begin), #is present at the center and not attending the feast
+                (faction_slot_eq, ":center_faction", slot_faction_ai_state, sfai_feast),
+                (faction_slot_eq, ":center_faction", slot_faction_ai_object, ":center_no"),
+                (assign, ":lady_meets_visitors", 0),
+              (else_try), #is present at the center and is married
+                (assign, ":lady_meets_visitors", 1),
+              (try_end),
+            (else_try), #is present at the center and is attending the feast
+              (faction_slot_eq, ":center_faction", slot_faction_ai_state, sfai_feast), #feast is in progress
+              (faction_slot_eq, ":center_faction", slot_faction_ai_object, ":center_no"),
+              (assign, ":lady_meets_visitors", 1),
+            (else_try), #is present at the center and is awaiting the player in private
+              (troop_slot_ge, ":troop_no", slot_troop_met, 2), #already met - awaits in private
+              (assign, ":lady_meets_visitors", 0),
+            (else_try), #is present at the center and is allowed to meet the player
+              (call_script, "script_get_kingdom_lady_social_determinants", ":troop_no"),
+              (call_script, "script_npc_decision_checklist_male_guardian_assess_suitor", reg0, "trp_player"),
+              (gt, reg0, 0),
+              (assign, ":lady_meets_visitors", 1),
+            (else_try), #is present at the center and is not allowed to meet the player
+              (assign, ":lady_meets_visitors", 0),
+            (try_end),
+            (try_begin),
+              (eq, ":lady_meets_visitors", 1),
+              (val_add, ":num_ladies", 1),
+            (try_end),
+          (else_try), #pretenders
+            (is_between, ":troop_no", pretenders_begin, pretenders_end),
+            (troop_slot_eq, ":troop_no", slot_troop_cur_center, ":center_no"),
+            (val_add, ":num_pretenders", 1),
+          (try_end),
+
+          (else_try), #lords
+            (troop_get_slot, ":party_no", ":troop_no", slot_troop_leaded_party),
+            (party_is_active, ":party_no"),
+            (assign, ":attached_party_no", -1),
+            (try_begin),
+              (gt, ":party_no", 0),
+              (party_get_attached_to, ":attached_party_no", ":party_no"),
+            (try_end),
+            (assign, ":center_id", ":attached_party_no"),
+            (try_begin),
+              (eq, ":center_id", ":center_no"),
+              (is_between, ":center_id", centers_begin, centers_end),
+              (is_between, ":troop_no", kings_begin, lords_end),
+              (val_add, ":num_lords", 1),
+            (try_end),
+          (try_end),
+          (troop_set_slot, ":troop_no", slot_troop_temp_slot, 1),
+        (try_end),
+        (store_add, ":num_total_in_hall", ":num_ladies", ":num_lords"),
+        (val_add, ":num_total_in_hall", ":num_pretenders"),
+
+        (assign, reg0, ":num_total_in_hall"),
+    ]
+  ),
 
   #script_agent_troop_get_banner_mesh
   # INPUT: agent_no, troop_no

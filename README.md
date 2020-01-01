@@ -14,19 +14,13 @@ __There might be serious issues in this mod, so use at your own risk.__
 
 As described [here](https://steamcommunity.com/sharedfiles/filedetails/?id=285119009), make a copy of Modules\Native and name it Diplado or as you wish. 
 
-Then download one of the latest release from **https://github.com/diegoami/Diplado/releases/** and extract it into said directory
+Then download one of the latest release from **https://github.com/diegoami/Diplado/releases/** and extract it into said directory.
 
-**master** releases contain changes which do not break compatibility with 4.3+ Steam for 1.174, while **develop** releases contain feature that might break downward compatibility with the base version, but contain more features and life improvements.
-**minimal** just contains fixes.
-
-That is why I work locally with separate modules, such as _Diplado_minimal_, _Diplado_master_ and _Diplado_develop_
+**minimal** just contains fixes. **master** releases contain changes which do not break compatibility with future releases of 4.3+ Steam for 1.174, while **develop** releases contain features that might end up have incompatible saves with future releases of the base version **develop**, however, contains more features and life improvements.  I advise you choose a **develop** release.
 
 ## KNOWN ISSUES
 
 * Multiplayer seems to be broken in many places
-
-
-
 
 ## FIXES / FEATURES
 
@@ -40,6 +34,7 @@ Some fixes:
 * Changing minister will not abort a quest you did not start
 * Removed menu option to delegate quest, as this does not seem to work
 * Exiled ladies do not appear in courts
+* The dialog for quest to delivery food shows the right quantity of food
 
 Some additions:
 
@@ -49,16 +44,17 @@ Some additions:
 * Import / Export companions
 * Whistle for your horse (key M)
 * Taunt your opponents, so that they will attack you (key O)
+* Main screen informs you how many lords are in town / castle hall
 
 Features removed
 
-* Training on the training ground does not cause injuries
+* Training on the training ground, including trainer, does not cause injuries
 * Relation changes during tournaments
 
 Also on the **development** branch
 
 * Option to turn the hold ground command on or off
-* Option to assign lords to a default group
+* Option to assign allied lords to a default control group
 * Minimap, troop ratio and kill count in the battle screen, with the option to turn it off 
 
 **master** releases' save files are backwardly compatible, but **develop** releases may contain more interesting features.
